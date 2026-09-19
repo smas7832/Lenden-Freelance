@@ -8,7 +8,6 @@
 <body>
 <header class="nav"><div class="container-x nav-inner">
 <div class="brand"><div class="brand-mark">🎓</div> Campus Gigs</div>
-<div class="nav-links"><span class="chip">B.Sc CS Project 2026–27</span><a class="btn btn-ghost btn-sm" href="/dashboard.html">Dashboard</a></div>
 </div></header>
 
 <section class="hero"><div class="container-x hero-grid">
@@ -18,7 +17,6 @@
 <p>Tutoring, design, coding, writing — browse verified campus gigs with transparent budgets. Save what you like, discuss openly, and trust two-way ratings.</p>
 <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
 <button class="btn btn-primary" onclick="document.getElementById('authCard').scrollIntoView({behavior:'smooth'})">Get started →</button>
-<a class="btn btn-light" href="/dashboard.html">Browse gigs</a>
 </div>
 <div class="grid g3" style="margin-top:22px">
 <div class="stat"><b id="stGigs">–</b><span class="muted small">Open gigs</span></div>
@@ -27,17 +25,17 @@
 </div>
 </div>
 <div class="hero-card" id="authCard">
-<div class="hero-card-head"><span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span><b style="margin-left:6px">Join with campus email</b></div>
+<div class="hero-card-head"><span class="dot" style="background:#f87171"></span><span class="dot" style="background:#fbbf24"></span><span class="dot" style="background:#34d399"></span><b style="margin-left:6px">Welcome back</b></div>
 <div class="tabs"><div class="tab active" id="tabL" onclick="showTab('L')">Login</div><div class="tab" id="tabS" onclick="showTab('S')">Signup</div></div>
 <div class="form" id="paneL">
-<label class="lbl">Email</label><input id="l_email" class="input" placeholder="you@college.edu">
+<label class="lbl">Email</label><input id="l_email" class="input" placeholder="you@example.com">
 <label class="lbl">Password</label><input id="l_pass" type="password" class="input" placeholder="••••••••">
 <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="doLogin()">Login →</button>
 <p class="small muted" style="margin-top:10px">Demo admin: <b>admin@campus.edu / admin123</b></p>
 </div>
 <div class="form" id="paneS" style="display:none">
 <label class="lbl">Full name</label><input id="s_name" class="input" placeholder="Vaibhavi Ghodke">
-<label class="lbl">Email</label><input id="s_email" class="input" placeholder="you@college.edu">
+<label class="lbl">Email</label><input id="s_email" class="input" placeholder="you@example.com">
 <label class="lbl">Password</label><input id="s_pass" type="password" class="input" placeholder="Min 4 chars">
 <label class="lbl">Skills</label><input id="s_skills" class="input" placeholder="Python, Figma, Tutoring…">
 <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="doSignup()">Create account ✨</button>
@@ -46,14 +44,8 @@
 </div></section>
 
 <section class="section"><div class="container-x">
-<h2>Everything from the synopsis, working.</h2>
-<p class="muted">Student profiles, gig discovery, admin moderation, ratings and notifications.</p>
-<div class="grid g4" style="margin-top:16px">
-<div class="card feature"><div class="ico">🧑‍💻</div><b>Students</b><p class="small muted">Verified profiles + skills, ratings and work history.</p></div>
-<div class="card feature"><div class="ico">🔍</div><b>Gig discovery</b><p class="small muted">Search, category filters, budget range and deadline sorting.</p></div>
-<div class="card feature"><div class="ico">🛡️</div><b>Admin</b><p class="small muted">Verify users, moderate gigs, reports queue, analytics.</p></div>
-<div class="card feature"><div class="ico">⭐</div><b>Trust + Ratings</b><p class="small muted">Two-way 1–5 ratings, public reviews and reports.</p></div>
-</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><h2>Fresh gigs 🔥</h2><a class="btn btn-light btn-sm" href="/dashboard.html">View all →</a></div>
+<div id="preview" class="grid g3" style="margin-top:14px"></div>
 </div></section>
 
 <section class="section" style="padding-top:0"><div class="container-x">
@@ -64,11 +56,6 @@
 <div class="step"><span class="n">3</span><b>💬 Discuss openly</b><p class="small muted">Ask questions in the public gig thread.</p></div>
 <div class="step"><span class="n">4</span><b>⭐ Trust ratings</b><p class="small muted">Two-way ratings and reports keep quality high.</p></div>
 </div>
-</div></section>
-
-<section class="section" style="padding-top:0"><div class="container-x">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2>Fresh gigs 🔥</h2><a class="btn btn-light btn-sm" href="/dashboard.html">View all →</a></div>
-<div id="preview" class="grid g3" style="margin-top:14px"></div>
 </div></section>
 
 <footer><div class="container-x" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
@@ -83,7 +70,7 @@ async function doLogin(){ try{ const d=await api('/api/auth/login',{method:'POST
 async function doSignup(){ try{ const d=await api('/api/auth/signup',{method:'POST',body:JSON.stringify({name:s_name.value,email:s_email.value,password:s_pass.value,skills:s_skills.value})}); localStorage.setItem('token',d.token); localStorage.setItem('user',JSON.stringify(d.user)); toast('Welcome!','ok'); location.href='/dashboard.html'; }catch(e){ toast(e.message,'err'); } }
 (async()=>{ if(getToken()) location.href='/dashboard.html';
 try{ const g=await api('/api/gigs?status=open'); stGigs.textContent=g.length;
-preview.innerHTML=g.slice(0,6).map(x=>`<div class="card gig-card"><div class="card-b"><div style="display:flex;gap:8px;margin-bottom:8px">${catBadge(x.category)}${statusBadge(x.status)}</div><b>${esc(x.title)}</b><div class="small muted">₹${x.budget} • by ${esc(x.poster_name)}</div></div></div>`).join('')||`<div class="empty">No gigs yet — be the first to post!</div>`;}catch{ stGigs.textContent='0'; }
+preview.innerHTML=g.slice(0,6).map(x=>`<div class="card gig-card" onclick="location.href='/dashboard.html'"><div class="card-b"><div style="display:flex;gap:8px;margin-bottom:8px">${catBadge(x.category)}${statusBadge(x.status)}</div><b>${esc(x.title)}</b><div class="small muted">₹${x.budget} • by ${esc(x.poster_name)}</div></div></div>`).join('')||`<div class="empty">No open gigs right now.</div>`;}catch{ stGigs.textContent='0'; }
 })();
 </script>
 </body>
