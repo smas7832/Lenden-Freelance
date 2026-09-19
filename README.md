@@ -1,4 +1,4 @@
-# Student Freelance & Micro-Gig Campus Marketplace
+# LenDen-Freelance (Student Freelance & Micro-Gig Campus Marketplace)
 
 Working project from synopsis (Vaibhavi Ghodke, Sneha Jadhav, Akanksha Kushwaha).
 

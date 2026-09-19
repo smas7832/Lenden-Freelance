@@ -7,6 +7,15 @@ const { Pool } = require('pg');
 // Accept either so `vercel connect` works with zero renames.
 const connectionString =
   process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+if (!connectionString) {
+  // Fail loudly instead of silently falling back to pg defaults (localhost:5432),
+  // which on Vercel surfaces as ECONNREFUSED 127.0.0.1:5432 + function timeout.
+  console.error(
+    'FATAL: neither DATABASE_URL nor POSTGRES_URL is set. ' +
+      'Add one in Vercel Settings → Environment Variables and Redeploy.'
+  );
+}
 const useSSL =
   connectionString &&
   (connectionString.includes('sslmode=require') ||
