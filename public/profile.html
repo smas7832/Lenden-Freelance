@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile — Campus Gigs</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.prof-cover{background:linear-gradient(120deg,#4f46e5,#7c3aed 50%,#06b6d4);border-radius:20px 20px 0 0;height:110px}
+.prof-av{width:84px;height:84px;border-radius:24px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;font-size:2rem;border:4px solid #fff;margin-top:-42px;box-shadow:var(--shadow)}
+.rbar{display:flex;align-items:center;gap:8px;font-size:.82rem;margin:4px 0}
+.rbar .track{flex:1;background:#f1f5f9;border-radius:99px;height:9px;overflow:hidden}
+.rbar .fill{background:linear-gradient(90deg,#f59e0b,#f97316);height:100%;border-radius:99px;transition:width .4s}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+@media(max-width:700px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.mini-stat{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;transition:.15s}
+.mini-stat:hover{border-color:#c7d2fe;transform:translateY(-2px)}
+.mini-stat b{font-size:1.25rem;display:block}
+.skill-tag{background:#eef2ff;color:var(--primary);border-radius:999px;padding:4px 12px;font-size:.78rem;font-weight:700;display:inline-block;margin:2px}
+.tabs-row{display:flex;gap:8px;margin:18px 0 12px;flex-wrap:wrap}
+.ptab{padding:9px 16px;border-radius:12px;background:#fff;border:1px solid var(--line);font-weight:700;cursor:pointer;font-size:.88rem;transition:.15s}
+.ptab:hover{border-color:var(--primary)}
+.ptab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+</style>
+</head>
+<body>
+<header class="nav"><div class="container-x nav-inner">
+<div class="brand"><div class="brand-mark">🎓</div> Campus Gigs</div>
+<div class="nav-links"><a class="btn btn-ghost btn-sm" href="/dashboard.html">← Dashboard</a><button class="btn btn-dark btn-sm" onclick="logout()">Logout</button></div>
+</div></header>
+<div class="container-x" style="padding-top:22px;max-width:920px">
+<div class="card"><div class="prof-cover"></div><div class="card-b">
+<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+<div class="prof-av" id="av">?</div>
+<div style="flex:1;min-width:220px">
+<h2 style="margin:0" id="pname">Loading…</h2>
+<div class="small muted" id="pmeta"></div>
+<div id="pskills" style="margin-top:8px"></div>
+</div>
+<div id="ownActions"></div>
+</div>
+<div class="stat-grid" id="pstats"></div>
+</div></div>
+
+<div class="card" id="editCard" style="margin-top:14px;display:none"><div class="card-b">
+<h3 style="margin:0 0 8px">✏️ Edit my profile</h3>
+<div class="grid g2"><div><label class="lbl">Name</label><input id="e_name" class="input"></div><div><label class="lbl">Skills (comma separated)</label><input id="e_skills" class="input"></div></div>
+<button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="saveProfile()">Save</button>
+</div></div>
+
+<div class="tabs-row">
+<button class="ptab active" onclick="showPane('posted',this)">📌 Posted gigs</button>
+<button class="ptab" onclick="showPane('work',this)">💼 Work history</button>
+<button class="ptab" onclick="showPane('reviews',this)">⭐ Reviews</button>
+<button class="ptab" onclick="showPane('about',this)">ℹ️ About</button>
+</div>
+<div id="pane-posted"><div id="gigs" class="grid g2"></div></div>
+<div id="pane-work" style="display:none"><div id="work"></div></div>
+<div id="pane-reviews" style="display:none">
+<div class="card"><div class="card-b"><h3 style="margin:0 0 8px">⭐ Rating breakdown</h3><div id="breakdown"></div></div></div>
+<div id="revs" style="display:grid;gap:10px;margin-top:12px"></div>
+</div>
+<div id="pane-about" style="display:none"><div class="card"><div class="card-b" id="about"></div></div></div>
+
+<div class="card" style="margin-top:16px"><div class="card-b">
+<h3 style="margin:0 0 8px">🚩 Report this user</h3>
+<div style="display:flex;gap:8px"><input id="repU" class="input" placeholder="Reason — fake, spam…"><button class="btn btn-danger btn-sm" onclick="reportUser()">Report</button></div>
+</div></div>
+</div>
+<script src="/app.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get('id');
+const me = currentUser();
+function showPane(w, el){ ['posted','work','reviews','about'].forEach(p=>document.getElementById('pane-'+p).style.display = p===w?'':'none'); document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+(async () => {
+  try {
+    const u = await api('/api/users/' + id + '/public');
+    av.textContent = (u.name || 'S')[0].toUpperCase();
+    pname.innerHTML = `${esc(u.name)} ${u.is_verified ? '<span class="chip">✅ verified</span>' : '<span class="chip">⏳ unverified</span>'}`;
+    const since = new Date(u.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+    pmeta.innerHTML = `📧 ${esc(u.email || '')} • 🗓️ Member since ${since} • 🆔 #${u.id}`;
+    pskills.innerHTML = (u.skills || '').split(',').map(s=>s.trim()).filter(Boolean).map(s=>`<span class="skill-tag">${esc(s)}</span>`).join('') || '<span class="muted small">No skills listed</span>';
+    if (me && Number(me.id) === Number(id)) {
+      ownActions.innerHTML = `<button class="btn btn-light btn-sm" onclick="editCard.style.display=editCard.style.display==='none'?'':'none'">✏️ Edit</button>`;
+      e_name.value = u.name || ''; e_skills.value = u.skills || '';
+    }
+    const g = await api('/api/users/' + id + '/gigs');
+    const postedCount = g.length;
+    const w = await api('/api/users/' + id + '/work');
+    const earned = w.filter(x=>x.status==='completed').reduce((s,x)=>s+(Number(x.budget)||0),0);
+    pstats.innerHTML = `
+      <div class="mini-stat"><b>${u.rating_avg || '–'}</b><span class="small muted">⭐ Avg rating</span><div class="small">${stars(u.rating_avg)}</div></div>
+      <div class="mini-stat"><b>${u.rating_count || 0}</b><span class="small muted">💬 Reviews</span></div>
+      <div class="mini-stat"><b>${postedCount}</b><span class="small muted">📌 Posted</span></div>
+      <div class="mini-stat"><b>${w.length}</b><span class="small muted">💼 Gigs done</span></div>
+      <div class="mini-stat"><b>₹${earned}</b><span class="small muted">💰 Earned</span></div>`;
+    gigs.innerHTML = g.map(x=>`<div class="card gig-card gig-${esc(x.category||'General')}" onclick="location.href='/gig.html?id=${x.id}'"><div class="card-b"><div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">${catBadge(x.category)}${statusBadge(x.status)}<span class="price-pill">₹${x.budget}</span>${deadlineBadge(x.deadline,x.status)}</div><b>${esc(x.title)}</b></div></div>`).join('') || `<div class="empty">No gigs posted yet.</div>`;
+    work.innerHTML = w.map(x=>`<div class="msg">💼 <b><a href="/gig.html?id=${x.id}" style="color:var(--primary)">${esc(x.title)}</a></b> ${catBadge(x.category)} ${statusBadge(x.status)} <span class="price-pill">₹${x.budget}</span></div>`).join('') || `<div class="empty">No freelance work on record yet.</div>`;
+    const r = await api('/api/ratings/user/' + id);
+    const counts = [0,0,0,0,0,0];
+    r.forEach(x=>{ counts[Number(x.score)] = (counts[Number(x.score)]||0)+1; });
+    breakdown.innerHTML = [5,4,3,2,1].map(s=>{ const c=counts[s]||0, pct=r.length?Math.round(c/r.length*100):0;
+      return `<div class="rbar"><b style="width:28px">${s}★</b><div class="track"><div class="fill" style="width:${pct}%"></div></div><span class="muted" style="width:70px">${c} (${pct}%)</span></div>`; }).join('');
+    revs.innerHTML = r.map(x=>`<div class="msg">${stars(x.score)} <b>${esc(x.from_name)}</b> <span class="muted small">• gig #${x.gig_id} • ${new Date(x.created_at).toLocaleDateString('en-IN')}</span><br>${esc(x.comment||'')}</div>`).join('') || `<div class="empty">No reviews yet.</div>`;
+    about.innerHTML = `<b>About ${esc(u.name)}</b><p class="muted">${esc(u.skills ? u.skills.split(',').map(s=>s.trim()).join(' • ') : 'Skills not listed yet.')}</p><p class="small muted">📧 ${esc(u.email||'')} • 🗓️ Joined ${since} • ${u.is_verified?'✅ Verified by admin':'⏳ Verification pending'}</p>`;
+  } catch(e){ pname.textContent='Error'; pmeta.textContent=e.message; }
+})();
+async function saveProfile(){ try{ const d=await api('/api/auth/me',{method:'PUT',body:JSON.stringify({name:e_name.value,skills:e_skills.value})}); localStorage.setItem('user',JSON.stringify({...me,...d})); toast('Saved!','ok'); location.reload(); }catch(e){ toast(e.message,'err'); } }
+async function reportUser(){ try{ if(!repU.value.trim()) return toast('Please enter a reason','err'); await api('/api/reports',{method:'POST',body:JSON.stringify({target_type:'user',target_id:Number(id),reason:repU.value})}); toast('Reported — admin will review','ok'); repU.value=''; }catch(e){ toast(e.message,'err'); } }
+</script>
+</body>
+</html>

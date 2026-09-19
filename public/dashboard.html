@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Campus Gigs</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="nav"><div class="container-x nav-inner">
+<div class="brand"><div class="brand-mark">🎓</div><div>Campus Gigs<div class="small muted" style="font-weight:500">Find. Post. Earn. On Campus.</div></div></div>
+<div class="nav-links"><span class="chip" id="bell" title="Unread notifications">🔔 0</span>
+<div class="dropdown"><button class="avatar avatar-ring" data-av id="avBtn" onclick="toggleMenu(event)" title="Account">?</button>
+<div class="menu" id="userMenu"><a href="#" id="menuProfile">👤 View profile</a><a href="#" onclick="logout();return false;">🚪 Log out</a></div></div></div>
+</div></header>
+
+<div class="container-x" style="padding-top:22px;padding-bottom:30px"><div class="shell">
+<aside class="sidebar">
+<div class="card profile-card"><div class="card-b">
+<div class="profile-top"><div class="profile-av" data-av>P</div><div><b id="sbName">Loading…</b><div class="small muted" id="sbEmail"></div></div></div>
+<div class="small" style="margin-top:10px"><b>Skills</b><div class="muted" id="sbSkills"></div></div>
+<div class="small" style="margin-top:6px"><b>Rating</b> <span id="sbRating"></span></div>
+<div class="small" style="margin-top:6px" id="sbVerified"></div>
+<a class="btn btn-light btn-sm" id="sbProfile" style="width:100%;margin-top:12px" href="#">View profile →</a>
+</div></div>
+<div class="card"><div class="card-b"><nav class="snav" id="sideNav">
+<a href="/dashboard.html" class="active">🏠 Dashboard</a>
+<a href="#savedSec">🔖 Saved</a>
+<a href="#notifSec">✉️ Notifications <span class="nbadge" id="navUnread" style="display:none">0</span></a>
+<a href="#" id="navReviews">⭐ Reviews</a>
+<a href="#" onclick="logout();return false;">🚪 Log out</a>
+</nav><nav class="snav" id="sideNavAdmin" style="display:none">
+<a href="#adminHome" class="active" onclick="goAdmin('overview')">📊 Overview</a>
+<a href="#adminHome" onclick="goAdmin('verify')">⏳ Verifications</a>
+<a href="#adminHome" onclick="goAdmin('users')">👥 Users</a>
+<a href="#adminHome" onclick="goAdmin('gigs')">📦 Gigs</a>
+<a href="#adminHome" onclick="goAdmin('reports')">🚩 Reports</a>
+<a href="#" onclick="logout();return false;">🚪 Log out</a>
+</nav></div></div>
+</aside>
+
+<main>
+<!-- ============ ADMIN HOME (admins only) ============ -->
+<div id="adminHome" style="display:none">
+<div class="welcome-row"><div class="welcome-ico">🛡️</div>
+<div><h2 style="margin:0" id="helloAdmin">Welcome, Admin!</h2></div></div>
+<div class="stat-cards">
+<div class="card stat-card kpi k-users"><div class="stat-ico si-violet">👥</div><div><b id="kUsers">–</b><div class="small muted">Users</div></div></div>
+<div class="card stat-card kpi k-pending"><div class="stat-ico si-amber">⏳</div><div><b id="kPending">–</b><div class="small muted">Pending verifications</div></div></div>
+<div class="card stat-card kpi k-gigs"><div class="stat-ico si-blue">📦</div><div><b id="kGigs">–</b><div class="small muted">Gigs</div></div></div>
+<div class="card stat-card kpi k-reports"><div class="stat-ico si-violet">🚩</div><div><b id="kReports">–</b><div class="small muted">Open reports</div></div></div>
+</div>
+<div class="grid g2" id="pane-a-overview">
+<div class="card"><div class="card-b"><h3 style="margin:0 0 8px">Gigs by category</h3><canvas id="chCat" height="180"></canvas></div></div>
+<div class="card"><div class="card-b"><h3 style="margin:0 0 8px">Gigs by status</h3><canvas id="chStatus" height="180"></canvas></div></div>
+</div>
+<h3 style="margin:18px 0 10px">⚠️ Needs attention</h3>
+<div class="grid g2">
+<div class="card"><div class="card-b"><b>⏳ Oldest pending verifications</b> <a class="lnk small" href="#adminHome" onclick="goAdmin('verify')">view all →</a><div class="small" id="attPending" style="margin-top:8px"></div></div></div>
+<div class="card"><div class="card-b"><b>🚩 Oldest open reports</b> <a class="lnk small" href="#adminHome" onclick="goAdmin('reports')">view all →</a><div class="small" id="attReports" style="margin-top:8px"></div></div></div>
+</div>
+<h3 style="margin:18px 0 10px">🕐 Recent activity</h3>
+<div class="grid g3">
+<div class="card"><div class="card-b"><b>🆕 Signups</b><div class="small" id="recUsers" style="margin-top:8px"></div></div></div>
+<div class="card"><div class="card-b"><b>📦 Gigs</b><div class="small" id="recGigs" style="margin-top:8px"></div></div></div>
+<div class="card"><div class="card-b"><b>⭐ Ratings given</b><div class="small" id="recRatings" style="margin-top:8px"></div></div></div>
+</div>
+<div id="pane-a-verify" style="display:none"><div class="card" style="margin-top:14px"><div class="card-b"><h3 style="margin:0 0 8px">⏳ Pending verifications</h3><div id="admPending" class="small muted">Loading…</div></div></div></div>
+<div id="pane-a-users" style="display:none"><div class="card" style="margin-top:14px"><div class="card-b"><h3 style="margin:0 0 8px">👥 All users</h3>
+<div class="toolbar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="uSearch" class="input" style="flex:1;min-width:160px" placeholder="🔍 Search name or email…" oninput="renderUsers()"><select id="uFilter" class="input" style="max-width:190px" onchange="renderUsers()"><option value="">All</option><option value="pending">Pending only</option><option value="verified">Verified only</option><option value="admin">Admins</option></select></div>
+<div id="usersBox" class="small">Loading…</div></div></div></div>
+<div id="pane-a-gigs" style="display:none"><div class="card" style="margin-top:14px"><div class="card-b"><h3 style="margin:0 0 8px">📦 All gigs</h3>
+<div class="toolbar" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><input id="gSearch" class="input" style="flex:1;min-width:160px" placeholder="🔍 Search gigs…" oninput="renderGigsAdmin()"><select id="gStatus" class="input" style="max-width:150px" onchange="renderGigsAdmin()"><option value="">Any status</option><option>open</option><option>assigned</option><option>completed</option></select></div>
+<div id="gigsBoxAdmin" class="small">Loading…</div></div></div></div>
+<div id="pane-a-reports" style="display:none"><div class="card" style="margin-top:14px"><div class="card-b"><h3 style="margin:0 0 8px">🚩 Reports queue</h3>
+<div class="toolbar" style="display:flex;gap:10px;margin-bottom:12px"><select id="rFilter" class="input" style="max-width:190px" onchange="loadReports()"><option value="open">Open</option><option value="reviewed">Reviewed</option><option value="resolved">Resolved</option><option value="">All</option></select></div>
+<div id="reportsBox" class="small">Loading…</div></div></div>
+</div>
+</div>
+
+<!-- ============ STUDENT HOME ============ -->
+<div id="userHome">
+<div class="welcome-row">
+<div class="welcome-ico">✨</div>
+<div><h2 style="margin:0" id="hello">Welcome!</h2></div>
+</div>
+<div class="stat-cards" style="grid-template-columns:repeat(3,1fr)">
+<div class="card stat-card"><div class="stat-ico si-violet">💼</div><div><b id="dsOpen">–</b><div class="small muted">Open gigs</div></div></div>
+<div class="card stat-card"><div class="stat-ico si-blue">🔖</div><div><b id="dsSaved">–</b><div class="small muted">Saved gigs</div></div></div>
+<div class="card stat-card"><div class="stat-ico si-green">⭐</div><div><b id="dsRating">–</b><div class="small muted">My rating</div></div></div>
+</div>
+<div id="gigsSec">
+<div class="card"><div class="card-b">
+<div class="search-card">
+<div class="grow"><span class="search-ico">🔍</span><input id="q" class="input" placeholder="Search — python, logo, maths…"></div>
+<input id="fmin" type="number" class="input" style="max-width:100px" placeholder="Min ₹">
+<span class="muted">–</span>
+<input id="fmax" type="number" class="input" style="max-width:100px" placeholder="Max ₹">
+<select id="fsort" class="input" style="max-width:150px"><option value="latest">Newest</option><option value="budget_asc">Budget ↑</option><option value="budget_desc">Budget ↓</option><option value="deadline">Deadline</option></select>
+<button class="btn btn-primary" onclick="loadGigs()">🔍 Search</button>
+</div>
+<div class="pills" id="catPills">
+<button class="pill active" data-c="">🌈 All</button>
+<button class="pill" data-c="Tutoring">📐 Tutoring</button>
+<button class="pill" data-c="Design">🎨 Design</button>
+<button class="pill" data-c="Coding">&lt;/&gt; Coding</button>
+<button class="pill" data-c="Writing">✏️ Writing</button>
+</div>
+</div></div>
+<h2 style="margin:16px 0 10px">Open gigs</h2>
+<div id="gigs" class="grid" style="gap:12px"></div>
+</div>
+<h2 id="savedSec" style="margin:22px 0 10px">🔖 Saved gigs</h2>
+<div id="saved" class="grid g2"></div>
+<div class="card" id="notifSec" style="margin-top:16px"><div class="card-b"><h3 style="margin:0 0 8px">🔔 Notifications <button class="btn btn-light btn-sm" style="float:right" onclick="markRead()">Mark read</button></h3><div id="notif" class="small muted">Loading…</div></div></div>
+</div>
+</main>
+</div></div>
+
+<script src="/app.js"></script>
+<script>
+requireLogin(); setUserChips();
+let savedIds = new Set();
+drawBar.cache = {};
+function drawBar(key, el, labels, values, color){
+  if (drawBar.cache[key]) drawBar.cache[key].destroy();
+  drawBar.cache[key] = new Chart(el, { type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: color, borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+}
+function toggleMenu(e){ e.stopPropagation(); document.getElementById('userMenu').classList.toggle('open'); }
+function goAdmin(name){
+  ['overview', 'verify', 'users', 'gigs', 'reports'].forEach(t => {
+    document.getElementById('pane-a-' + t).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('#sideNavAdmin a').forEach(a => {
+    const m = a.getAttribute('onclick') || '';
+    a.classList.toggle('active', m.includes("'" + name + "'"));
+  });
+}
+document.addEventListener('click', e => { const m = document.getElementById('userMenu'); if (m && !e.target.closest('.dropdown')) m.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('userMenu')?.classList.remove('open'); });
+document.querySelectorAll('#catPills .pill').forEach(p => p.onclick = () => {
+  document.querySelectorAll('#catPills .pill').forEach(x => x.classList.remove('active'));
+  p.classList.add('active'); loadGigs();
+});
+async function loadMe(){
+  try{
+    const m = await api('/api/auth/me');
+    hello.textContent = `Welcome back, ${m.name.split(' ')[0]}! 👋`;
+    helloAdmin.textContent = `Welcome back, ${m.name.split(' ')[0]}! 🛡️`;
+    sbName.textContent = m.name; sbEmail.textContent = m.email;
+    sbSkills.textContent = m.skills || '—';
+    sbRating.innerHTML = `${stars(m.rating_avg)} <b>${m.rating_avg || '–'}</b>`;
+    sbVerified.innerHTML = m.is_verified ? '🟢 Verified Student' : '🟡 Verification pending';
+    sbProfile.href = '/profile.html?id=' + m.id;
+    menuProfile.href = '/profile.html?id=' + m.id;
+    navReviews.href = '/profile.html?id=' + m.id;
+    dsRating.textContent = m.rating_avg || '–';
+    return m;
+  }catch(e){ hello.textContent = 'Welcome!'; return null; }
+}
+function gigRow(x){
+  const saved = savedIds.has(x.id);
+  const icon = CAT_ICON[x.category] || '📌';
+  return `<div class="card gig-row gig-${esc(x.category || 'General')}" onclick="location.href='/gig.html?id=${x.id}'">
+    <div class="gig-ico gi-${esc(x.category || 'General')}">${esc(icon)}</div>
+    <div class="gig-main">
+      <div class="gig-top"><b>${esc(x.title)}</b><span class="gig-price">₹${Number(x.budget).toLocaleString('en-IN')}</span></div>
+      <div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap">${catBadge(x.category)}${statusBadge(x.status)}<span class="open-dot">● Open</span>${deadlineBadge(x.deadline, x.status)}</div>
+      <p class="small muted" style="margin:4px 0">${esc((x.description || '').slice(0, 120))}</p>
+      <div class="gig-foot"><span class="small muted">👤 ${esc(x.poster_name)} • 🕐 ${timeAgo(x.created_at)} • 📅 ${esc(x.deadline || 'flexible')}</span>
+      <span style="display:flex;gap:8px"><a class="btn btn-primary btn-sm" href="/gig.html?id=${x.id}" onclick="event.stopPropagation()">View →</a><button class="save-heart ${saved ? 'on' : ''}" onclick="event.stopPropagation();toggleSave(${x.id})">${saved ? '❤️' : '🤍'}</button></span></div>
+    </div></div>`;
+}
+async function loadGigs(){
+  try{
+    const activeCat = (document.querySelector('#catPills .pill.active') || {}).dataset?.c || '';
+    const g = await api(`/api/gigs?status=open&search=${encodeURIComponent(q.value)}&category=${encodeURIComponent(activeCat)}&min_budget=${encodeURIComponent(fmin.value)}&max_budget=${encodeURIComponent(fmax.value)}&sort=${fsort.value}`);
+    dsOpen.textContent = g.length;
+    gigs.innerHTML = g.map(gigRow).join('') || `<div class="empty">No gigs found. Try another search!</div>`;
+  }catch(e){ toast(e.message, 'err'); }
+}
+async function loadSavedIds(){ try{ savedIds = new Set(await api('/api/bookmarks/ids/set')); }catch{} }
+async function loadSaved(){
+  try{
+    const s = await api('/api/bookmarks');
+    dsSaved.textContent = s.length;
+    saved.innerHTML = s.map(gigRow).join('') || `<div class="empty">No saved gigs — tap 🤍 on any gig to save it here.</div>`;
+  }catch(e){ saved.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function toggleSave(id){
+  try{
+    if (savedIds.has(id)) { await api('/api/bookmarks/' + id, { method: 'DELETE' }); savedIds.delete(id); }
+    else { await api('/api/bookmarks/' + id, { method: 'POST', body: JSON.stringify({}) }); savedIds.add(id); toast('Saved list updated', 'ok'); }
+    loadGigs(); loadSaved();
+  }catch(e){ toast(e.message, 'err'); }
+}
+async function loadNotif(){
+  try{
+    const n = await api('/api/notifications');
+    bell.textContent = `🔔 ${n.unread}`;
+    if (n.unread > 0) { navUnread.style.display = ''; navUnread.textContent = n.unread; } else navUnread.style.display = 'none';
+    notif.innerHTML = n.items.slice(0, 8).map(x => `<div class="msg" style="${x.is_read ? 'opacity:.65' : ''}">${x.is_read ? '' : '🟢 '}${esc(x.title)} <span class="muted">• ${timeAgo(x.created_at)}</span>${x.gig_id ? ` <a href="/gig.html?id=${x.gig_id}" style="color:var(--primary)">open →</a>` : ''}</div>`).join('') || '<span class=muted>No notifications yet</span>';
+  }catch(e){ notif.textContent = e.message; }
+}
+async function markRead(){ await api('/api/notifications/read-all', { method: 'PUT', body: JSON.stringify({}) }); loadNotif(); }
+/* ---------- admin home ---------- */
+let AUSERS = [], AGIGS = [];
+async function loadAdminHome(){
+  try{
+    const s = await api('/api/admin/stats');
+    drawBar('cat', chCat, (s.by_category || []).map(x => x.category), (s.by_category || []).map(x => x.c), '#6d28d9');
+    drawBar('status', chStatus, (s.by_status || []).map(x => x.status), (s.by_status || []).map(x => x.c), '#10b981');
+    AUSERS = await api('/api/admin/users');
+    AGIGS = await api('/api/admin/gigs');
+    const reps = await api('/api/reports?status=open').catch(() => []);
+    const pending = AUSERS.filter(u => !u.is_verified && !u.is_admin);
+    kUsers.textContent = s.users; kPending.textContent = pending.length;
+    kGigs.textContent = s.gigs; kReports.textContent = reps.length;
+    admPending.innerHTML = pending.slice(0, 6).map(x => `<div class="msg pending"><b>${esc(x.name)}</b> <span class="muted">${esc(x.email)}</span><br><button class="btn btn-success btn-sm" onclick="adminVerify(${x.id},true)">✅ Verify</button> <a class="btn btn-light btn-sm" href="/profile.html?id=${x.id}">Profile</a></div>`).join('') || '<span class="muted">No pending verifications 🎉</span>';
+    attPending.innerHTML = pending.slice(0, 3).map(x => `• <b>${esc(x.name)}</b> <span class="muted">${timeAgo(x.created_at)} — <button class="btn btn-success btn-sm" onclick="adminVerify(${x.id},true)">Verify</button></span>`).join('<br>') || '<span class="muted">All clear 🎉</span>';
+    const openReps = reps;
+    attReports.innerHTML = openReps.slice(0, 3).map(x => `• 🚩 ${esc(x.target_type)} #${x.target_id} <span class="muted">${timeAgo(x.created_at)}</span>`).join('<br>') || '<span class="muted">All clear 🎉</span>';
+    recUsers.innerHTML = AUSERS.slice(0, 5).map(x => `• ${esc(x.name)} <span class="muted">${timeAgo(x.created_at)}</span>`).join('<br>') || '—';
+    recGigs.innerHTML = AGIGS.slice(0, 5).map(x => `• <a href="/gig.html?id=${x.id}" style="color:var(--primary)">${esc(x.title)}</a> <span class="muted">[${x.status}]</span>`).join('<br>') || '—';
+    const ratings = await api('/api/admin/ratings').catch(() => []);
+    recRatings.innerHTML = ratings.slice(0, 5).map(x => `• ${stars(x.score)} ${esc(x.from_name)} → ${esc(x.to_name)} <span class="muted">${timeAgo(x.created_at)}</span>`).join('<br>') || '—';
+    renderUsers(); renderGigsAdmin(); loadReports();
+  }catch(e){ admPending.textContent = e.message; }
+}
+function renderUsers(){
+  const q = (uSearch.value || '').toLowerCase(), f = uFilter.value;
+  const list = AUSERS.filter(x => {
+    if (f === 'pending' && (x.is_verified || x.is_admin)) return false;
+    if (f === 'verified' && !x.is_verified) return false;
+    if (f === 'admin' && !x.is_admin) return false;
+    return (x.name + ' ' + x.email).toLowerCase().includes(q);
+  });
+  usersBox.innerHTML = `<table class="tbl"><tr><th>Name</th><th>Status</th><th></th></tr>` + list.slice(0, 30).map(x => `<tr><td><b><a href="/profile.html?id=${x.id}">${esc(x.name)}</a></b><br><span class="muted">${esc(x.email)}</span></td><td>${x.is_verified ? '✅' : '⏳'}${x.is_admin ? ' 👑' : ''}</td><td>${x.is_admin ? '<span class="muted small">admin</span>' : (x.is_verified ? `<button class="btn btn-light btn-sm" onclick="adminVerify(${x.id},false)">Unverify</button>` : `<button class="btn btn-success btn-sm" onclick="adminVerify(${x.id},true)">Verify</button>`)}</td></tr>`).join('') + `</table>`;
+}
+function renderGigsAdmin(){
+  const q = (gSearch.value || '').toLowerCase();
+  const list = AGIGS.filter(x => (!gStatus.value || x.status === gStatus.value) && (x.title + ' ' + (x.description || '')).toLowerCase().includes(q));
+  gigsBoxAdmin.innerHTML = list.slice(0, 30).map(x => `<div class="msg"><b><a href="/gig.html?id=${x.id}" style="color:var(--primary)">${esc(x.title)}</a></b> ${catBadge(x.category)} ${statusBadge(x.status)}<br><span class="muted">by ${esc(x.poster_name)} • ₹${x.budget}</span> <button class="btn btn-danger btn-sm" onclick="adminDelGig(${x.id})">Delete</button></div>`).join('') || '<div class="empty">No gigs match.</div>';
+}
+async function loadReports(){
+  try{
+    const r = await api('/api/reports' + (rFilter.value ? '?status=' + rFilter.value : ''));
+    reportsBox.innerHTML = r.slice(0, 20).map(x => `<div class="msg">🚩 <b>${esc(x.target_type)} #${x.target_id}</b> by ${esc(x.reporter_name)}: ${esc(x.reason)} <span class="muted">[${x.status}]</span><br>${x.target_type === 'gig' ? `<a class="btn btn-light btn-sm" href="/gig.html?id=${x.target_id}">Open gig →</a>` : `<a class="btn btn-light btn-sm" href="/profile.html?id=${x.target_id}">Open user →</a>`} <button class="btn btn-ghost btn-sm" onclick="repStatus(${x.id},'reviewed')">Reviewed</button> <button class="btn btn-success btn-sm" onclick="repStatus(${x.id},'resolved')">Resolve</button></div>`).join('') || '<div class="empty">Nothing here 🎉</div>';
+  }catch(e){ reportsBox.textContent = e.message; }
+}
+async function adminVerify(id, v){ await api(`/api/admin/users/${id}/verify`, { method: 'PUT', body: JSON.stringify({ is_verified: v }) }); toast(v ? 'Verified ✅' : 'Unverified', 'ok'); loadAdminHome(); }
+async function adminDelGig(id){ if (confirm('Delete this gig?')) { await api('/api/gigs/' + id, { method: 'DELETE' }); toast('Deleted', 'ok'); loadAdminHome(); } }
+async function repStatus(id, s){ await api('/api/reports/' + id, { method: 'PUT', body: JSON.stringify({ status: s }) }); toast(s, 'ok'); loadAdminHome(); }
+(async () => {
+  await loadSavedIds();
+  const m = await loadMe();
+  if (m && m.is_admin) { userHome.style.display = 'none'; adminHome.style.display = ''; sideNav.style.display = 'none'; sideNavAdmin.style.display = ''; sbVerified.innerHTML = '🛡️ Admin 👑'; loadAdminHome(); }
+  else { loadGigs(); loadSaved(); }
+  loadNotif();
+})();
+q.addEventListener('keydown', e => { if (e.key === 'Enter') loadGigs(); });
+</script>
+</body>
+</html>

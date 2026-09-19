@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gig — Campus Gigs</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="nav"><div class="container-x nav-inner">
+<div class="brand"><div class="brand-mark">🎓</div> Campus Gigs</div>
+<div class="nav-links"><a class="btn btn-ghost btn-sm" href="/dashboard.html">← Dashboard</a><button class="btn btn-dark btn-sm" onclick="logout()">Logout</button></div>
+</div></header>
+<div class="container-x" style="padding-top:22px;max-width:880px">
+<div id="gig"></div>
+<div class="grid g2" style="margin-top:16px">
+<div class="card"><div class="card-b"><h3 style="margin:0 0 8px">💬 Discussion</h3>
+<div id="msgs" class="chat small"></div>
+<div style="display:flex;gap:8px;margin-top:10px"><input id="mt" class="input" placeholder="Type a message…"><button class="btn btn-dark" onclick="sendMsg()">Send</button></div></div></div>
+<div class="card"><div class="card-b"><h3 style="margin:0 0 8px">🔖 Save this gig</h3>
+<p class="small muted">Shortlist gigs you like and find them on your dashboard.</p>
+<button class="btn btn-light" id="saveBtn" style="width:100%" onclick="toggleSaveGig()">🤍 Save</button>
+</div></div>
+</div>
+<div class="card" style="margin-top:16px"><div class="card-b">
+<h3 style="margin:0 0 8px">🚩 Report this gig</h3>
+<div style="display:flex;gap:8px"><input id="rep" class="input" placeholder="Reason — spam, fake, inappropriate…"><button class="btn btn-danger btn-sm" onclick="reportGig()">Report</button></div>
+</div></div>
+</div>
+<script src="/app.js"></script>
+<script>
+requireLogin();
+const id = new URLSearchParams(location.search).get('id');
+let isSaved = false;
+async function load(){
+  try{
+    const g = await api('/api/gigs/' + id);
+    gig.innerHTML = `<div class="card"><div class="card-b"><div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">${catBadge(g.category)}${statusBadge(g.status)}${deadlineBadge(g.deadline, g.status)}</div><h2 style="margin:0">${esc(g.title)}</h2><p class="muted">₹${g.budget} • by <a href="/profile.html?id=${g.poster_id}" style="color:var(--primary)"><b>${esc(g.poster_name)}</b> (view profile →)</a> • Deadline ${esc(g.deadline || 'flexible')}</p><p>${esc(g.description || 'No description')}</p></div></div>`;
+    const m = await api(`/api/gigs/${id}/messages`);
+    msgs.innerHTML = m.map(x => `<div class="msg"><b>${esc(x.sender_name)}:</b> ${esc(x.text)}</div>`).join('') || '<div class="empty">No messages yet — say hi! 👋</div>';
+    try{ const ids = await api('/api/bookmarks/ids/set'); isSaved = ids.includes(Number(id)); saveBtn.textContent = isSaved ? '❤️ Saved' : '🤍 Save'; }catch{}
+  }catch(e){ gig.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function sendMsg(){ try{ if (!mt.value.trim()) return; await api(`/api/gigs/${id}/messages`, { method: 'POST', body: JSON.stringify({ text: mt.value }) }); mt.value = ''; load(); }catch(e){ toast(e.message, 'err'); } }
+async function toggleSaveGig(){ try{ if (isSaved) await api('/api/bookmarks/' + id, { method: 'DELETE' }); else await api('/api/bookmarks/' + id, { method: 'POST', body: JSON.stringify({}) }); load(); }catch(e){ toast(e.message, 'err'); } }
+async function reportGig(){ try{ if (!rep.value.trim()) return toast('Please enter a reason', 'err'); await api('/api/reports', { method: 'POST', body: JSON.stringify({ target_type: 'gig', target_id: Number(id), reason: rep.value }) }); toast('Reported — admin will review', 'ok'); rep.value = ''; }catch(e){ toast(e.message, 'err'); } }
+load();
+</script>
+</body>
+</html>
